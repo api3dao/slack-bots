@@ -6,7 +6,7 @@ This Google Apps Script (GAS) code is designed to automatically post time-off up
 
 1. Checks if any time-off dates in the provided Google Sheet fall within the current week or the next week.
 2. Compiles this data into a message.
-3. Sends the compiled message to a specified Slack channel.
+3. Sends the compiled message to a specified Slack channel, in this case the [#technical-time-off](https://api3workspace.slack.com/archives/C03L914J4ET) channel.
 
 ## How to Set Up
 
