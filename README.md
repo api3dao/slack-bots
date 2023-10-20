@@ -37,6 +37,8 @@ This Google Apps Script (GAS) code is designed to automatically post time-off up
    - Once the app is installed, you'll be redirected back to the Slack app settings.
    - In the "OAuth & Permissions" section, you'll see a "Bot User OAuth Token". This token starts with `xoxb-`.
    - Copy this token and replace `YOUR_TOKEN` in the GAS code with it.
+5. **Add the app to the channel**:
+   - Go to `#technical-time-off`, click `Add apps` and add the newly created app
 
 ### 3. Google Sheet Setup
 
