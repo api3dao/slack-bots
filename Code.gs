@@ -121,7 +121,7 @@ function postToSlack() {
 
   // Get the time-off logbook spreadsheet.
   var spreadsheet = SpreadsheetApp.openById("YOUR_SPREADSHEET_ID"); // Replace with your actual Spreadsheet ID
-  var sheet = spreadsheet.getSheetByName("Sheet1");
+  var sheet = spreadsheet.getSheetByName("Instructions");
   var lastRow = sheet.getLastRow();
   var timeOffData = sheet.getRange(1, 1, lastRow, 4).getValues();
 
