@@ -4,9 +4,11 @@ This Google Apps Script (GAS) code is designed to automatically post time-off up
 
 ## Overview
 
-1. Checks if any time-off dates in the provided Google Sheet fall within the current week or the next week.
-2. Compiles this data into a message.
-3. Sends the compiled message to a specified Slack channel, in this case the [#technical-time-off](https://api3workspace.slack.com/archives/C03L914J4ET) channel.
+1. The bot checks the provided [Google Sheet](https://docs.google.com/spreadsheets/d/1-qxltbYl6316Y6ZMmkephI4Dc5fqp__rpZYjSg4inQk/edit#gid=1070316407) daily for any new or updated time-off dates.
+2. Checks if any time-off dates in the provided Google Sheet fall within the current week or the next week.
+3. Compiles this data into a message.
+4. Before sending, the bot fetches the most recent messages from the specified Slack channel to ensure the new message content differs from the last message it sent.
+5. If the content differs, sends the compiled message to the specified Slack channel, in this case the [#technical-time-off](https://api3workspace.slack.com/archives/C03L914J4ET) channel.Otherwise, it refrains from sending repetitive updates.
 
 ## How to Set Up
 
@@ -30,6 +32,11 @@ This Google Apps Script (GAS) code is designed to automatically post time-off up
    - Scroll down to the "Scopes" section.
    - Under "Bot Token Scopes", click "Add an OAuth Scope".
    - Add the `chat:write` scope, which allows your bot to post messages.
+   - Also add the following scopes which allow your bot to fetch channel history and read channel details:
+     - `channels:history`
+     - `channels:read`
+     - `groups:history` (for private channels)
+     - `groups:read` (for private channels)
 3. **Install the App to Workspace**:
    - Above the "Scopes" section, click on the "Install to Workspace" button.
    - You'll be redirected to your Slack workspace to authorize the app. Click "Allow".
@@ -39,6 +46,10 @@ This Google Apps Script (GAS) code is designed to automatically post time-off up
    - Copy this token and replace `YOUR_TOKEN` in the GAS code with it.
 5. **Add the app to the channel**:
    - Go to `#technical-time-off`, click `Add apps` and add the newly created app
+6. **Channel Name and Channel ID**:
+   - In the GAS code, ensure you use the correct values for the **Channel Name** (`CHANNEL` variable, in this case: `#technical-time-off`) and the **Channel ID** (`CHANNEL_ID` variable).
+   - The **Channel ID** can be found in the Slack channel's URL, it typically starts with a "C" for public channels or a "G" for private channels/groups.
+   - To get the **Channel ID**, navigate to the desired channel in Slack's web or desktop app, and check the URL. It should look something like `https://yourworkspace.slack.com/messages/CXXXXX12345/, where `CXXXXX12345` is your Channel ID. Alternatively, right click on the channel to get see the channel details windows and get the Channel ID value.
 
 ### 3. Google Sheet Setup
 
@@ -61,8 +72,13 @@ Team members should input their time-off dates in advance since the bot announce
 3. For the function to run, choose `postToSlack`.
 4. For the deployment, choose `Head`.
 5. For the event source, select `Time-driven`.
-6. Choose the frequency you'd like the script to run. For example, if you want it to run every Monday, select "Week timer" and "Every Monday".
+6. Choose the frequency you'd like the script to run. To have the script run daily, select "Time-driven" and then "Day timer" to specify the time of day, ideally every morning (CET).
 7. Save the trigger.
+
+### 5. Ensure Bot Membership:
+
+- It's crucial that the bot is a member of the channel from which you're fetching the history.
+- In Slack, navigate to the desired channel and type `/invite @YourBotName` to ensure the bot is added to that channel.
 
 #### Note:
 

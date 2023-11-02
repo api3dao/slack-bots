@@ -1,3 +1,10 @@
+// OAuth token from Slack and Slack channel name and channel ID
+var TOKEN = "YOUR_TOKEN";
+var CHANNEL = "#technical-time-off"; // channel ID
+var CHANNEL_ID = "YOUR_CHANNEL_ID"; // channel ID is accessible from the channel details window
+var SPREADSHEET_ID = "YOUR_SPREADSHEET_ID";
+var SHEET_NAME = "Instructions";
+
 function isDateInThisWeek(date) {
   var now = new Date();
 
@@ -114,14 +121,48 @@ function calculateAccumulatedTimeOff(timeOffData) {
   return accumulatedWeeksOffByType;
 }
 
-function postToSlack() {
-  // OAuth token from Slack and Slack channel ID or name
-  var TOKEN = "YOUR_TOKEN"; // Replace with your actual token
-  var CHANNEL = "#technical-time-off";
+function getLastBotMessage() {
+  var apiUrl = "https://slack.com/api/conversations.history";
+  var payload = {
+    channel: CHANNEL_ID,
+    token: TOKEN,
+    limit: 20, // fetch the last 20 messages (adjust as needed)
+  };
 
+  var headers = {
+    Authorization: "Bearer " + TOKEN,
+    "Content-Type": "application/x-www-form-urlencoded",
+  };
+
+  var options = {
+    method: "get",
+    headers: headers,
+    payload: payload,
+    muteHttpExceptions: true,
+  };
+
+  var response = UrlFetchApp.fetch(apiUrl, options);
+  var jsonResponse = JSON.parse(response.getContentText());
+
+  if (jsonResponse.ok) {
+    for (var i = 0; i < jsonResponse.messages.length; i++) {
+      var message = jsonResponse.messages[i];
+      if (message.bot_id) {
+        // bot messages object will have bot_id field
+        return message.text;
+      }
+    }
+  } else {
+    Logger.log("Error fetching Slack history: " + jsonResponse.error);
+    return null;
+  }
+}
+
+function postToSlack() {
   // Get the time-off logbook spreadsheet.
-  var spreadsheet = SpreadsheetApp.openById("YOUR_SPREADSHEET_ID"); // Replace with your actual Spreadsheet ID
-  var sheet = spreadsheet.getSheetByName("Instructions");
+  var spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+
+  var sheet = spreadsheet.getSheetByName(SHEET_NAME);
   var lastRow = sheet.getLastRow();
   var timeOffData = sheet.getRange(1, 1, lastRow, 4).getValues();
 
@@ -170,28 +211,37 @@ function postToSlack() {
     slackMessage += "No updates for this week or next week.\n";
   }
 
-  // Send the slack message
-  var apiUrl = "https://slack.com/api/chat.postMessage";
-  var payload = {
-    channel: CHANNEL,
-    text: slackMessage,
-    token: TOKEN,
-  };
-  var headers = {
-    Authorization: "Bearer " + TOKEN,
-    "Content-Type": "application/json; charset=UTF-8",
-  };
-  var options = {
-    method: "post",
-    headers: headers,
-    payload: JSON.stringify(payload),
-    muteHttpExceptions: true,
-  };
+  var lastBotMessage = getLastBotMessage();
 
-  var response = UrlFetchApp.fetch(apiUrl, options);
-  var jsonResponse = JSON.parse(response.getContentText());
+  if (lastBotMessage !== slackMessage) {
+    // Send the slack message
+    var apiUrl = "https://slack.com/api/chat.postMessage";
+    var payload = {
+      channel: CHANNEL,
+      text: slackMessage,
+      token: TOKEN,
+    };
+    var headers = {
+      Authorization: "Bearer " + TOKEN,
+      "Content-Type": "application/json; charset=UTF-8",
+    };
 
-  if (!jsonResponse.ok) {
-    Logger.log("Error posting to Slack: " + jsonResponse.error);
+    var options = {
+      method: "post",
+      headers: headers,
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true,
+    };
+
+    var response = UrlFetchApp.fetch(apiUrl, options);
+    var jsonResponse = JSON.parse(response.getContentText());
+
+    if (!jsonResponse.ok) {
+      Logger.log("Error posting to Slack: " + jsonResponse.error);
+    }
+  } else {
+    Logger.log(
+      "Message content is the same as the last message. Not sending a new message."
+    );
   }
 }
