@@ -59,9 +59,29 @@ function getWeeksBetween(d1, d2) {
   return diff / oneWeek;
 }
 
+function getEndOfNextBusinessWeek() {
+  var now = new Date();
+  var endOfNextWeek = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() - now.getDay() + 13
+  ); // End of next week
+  // Adjust to Friday if the end of the next week is a Saturday or Sunday
+  if (endOfNextWeek.getDay() === 6) {
+    // Saturday
+    endOfNextWeek.setDate(endOfNextWeek.getDate() - 1);
+  } else if (endOfNextWeek.getDay() === 0) {
+    // Sunday
+    endOfNextWeek.setDate(endOfNextWeek.getDate() - 2);
+  }
+  return endOfNextWeek;
+}
+
 function calculateAccumulatedTimeOff(timeOffData) {
   var accumulatedDaysOffByType = {};
   var currentYear = new Date().getFullYear();
+  // Get the end of the next business week
+  var endOfNextBusinessWeek = getEndOfNextBusinessWeek();
 
   function countWeekdaysBetweenDates(startDate, endDate) {
     var totalDays = 0;
@@ -100,6 +120,9 @@ function calculateAccumulatedTimeOff(timeOffData) {
     }
     if (!accumulatedDaysOffByType[person][typeOfLeave]) {
       accumulatedDaysOffByType[person][typeOfLeave] = 0;
+    }
+    if (endDate > endOfNextBusinessWeek) {
+      endDate = endOfNextBusinessWeek;
     }
 
     accumulatedDaysOffByType[person][typeOfLeave] += countWeekdaysBetweenDates(
