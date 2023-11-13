@@ -9,6 +9,8 @@ This Google Apps Script (GAS) code is designed to automatically post time-off up
 3. Compiles this data into a message.
 4. Before sending, the bot fetches the most recent messages from the specified Slack channel to ensure the new message content differs from the last message it sent.
 5. If the content differs, sends the compiled message to the specified Slack channel, in this case the [#technical-time-off](https://api3workspace.slack.com/archives/C03L914J4ET) channel.Otherwise, it refrains from sending repetitive updates.
+6. The bot has been updated to provide a more concise format for time-off announcements, focusing solely on the dates without the type of leave details. Business Leave (B/L) is now excluded from the accumulated time-off calculations.
+7. A new feature has been added to post a monthly accumulated time-off report, providing an overview of each team member's total time-off.
 
 ## How to Set Up
 
@@ -75,7 +77,21 @@ Team members should input their time-off dates in advance since the bot announce
 6. Choose the frequency you'd like the script to run. To have the script run daily, select "Time-driven" and then "Day timer" to specify the time of day, ideally every morning (CET).
 7. Save the trigger.
 
-### 5. Ensure Bot Membership:
+### 5. Monthly Accumulated Time-Off Report Setup
+
+To ensure that the team is periodically updated about the accumulated time-off, a monthly report is sent out. This is handled by the `postMonthlyAccumulatedTimeOff()` function in the script. To set this up:
+
+1. In Google Apps Script, click on the clock icon in the sidebar to open the "Triggers" page.
+2. Click on the `+ Add Trigger` button at the bottom right.
+3. For the function to run, choose `postMonthlyAccumulatedTimeOff`.
+4. For the deployment, choose `Head`.
+5. For the event source, select `Time-driven`.
+6. Choose "Month timer" and select the day of the month and time you prefer for the report to be sent.
+7. Save the trigger.
+
+This monthly report will provide a concise summary of each team member's accumulated time off, sorted and formatted for easy understanding. It excludes any Business Leave (B/L) as it's not considered time off.
+
+### 6. Ensure Bot Membership:
 
 - It's crucial that the bot is a member of the channel from which you're fetching the history.
 - In Slack, navigate to the desired channel and type `/invite @YourBotName` to ensure the bot is added to that channel.
