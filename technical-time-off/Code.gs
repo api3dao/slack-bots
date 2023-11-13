@@ -103,6 +103,11 @@ function calculateAccumulatedTimeOff(timeOffData) {
     var startDate = parseDate(timeOffData[i][1]);
     var endDate = parseDate(timeOffData[i][2]);
 
+    // Skip B/L type leaves
+    if (typeOfLeave === "B/L") {
+      continue;
+    }
+
     // Check if the parsed dates are valid and from the current year
     if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
       continue;
@@ -204,26 +209,18 @@ function postToSlack() {
       var startDate = parseDate(timeOffData[i][1]);
       var endDate = parseDate(timeOffData[i][2]);
 
+      var conciseDateRange = `${formatDate(startDate).substr(
+        4,
+        6
+      )}-${formatDate(endDate).substr(4, 6)} (${formatDate(startDate).substr(
+        0,
+        3
+      )}-${formatDate(endDate).substr(0, 3)})`;
+
       if (isDateInThisWeek(startDate) || isDateInThisWeek(endDate)) {
-        slackMessage += `\n${person} is away this week for ${typeOfTimeOff} from ${formatDate(
-          startDate
-        )} to ${formatDate(
-          endDate
-        )}.\n${person} then have cumulated ${accumulatedTimeOff[person][
-          typeOfTimeOff
-        ].toFixed(
-          1
-        )} days of ${typeOfTimeOff} since the beginning of the year (including the above dates).\n`;
+        slackMessage += `\n${person}, ${conciseDateRange}\n`;
       } else if (isDateInNextWeek(startDate) || isDateInNextWeek(endDate)) {
-        slackMessage += `\n${person} will be away next week for ${typeOfTimeOff} from ${formatDate(
-          startDate
-        )} to ${formatDate(
-          endDate
-        )}.\n${person} will then have cumulated ${accumulatedTimeOff[person][
-          typeOfTimeOff
-        ].toFixed(
-          1
-        )} days of ${typeOfTimeOff} since the beginning of the year (including the above dates).\n`;
+        slackMessage += `\n${person}, ${conciseDateRange} (next week)\n`;
       }
     } catch (e) {
       Logger.log("Error in loop at index " + i + ": " + e.toString());
@@ -265,6 +262,67 @@ function postToSlack() {
   } else {
     Logger.log(
       "Message content is the same as the last message. Not sending a new message."
+    );
+  }
+}
+
+function postMonthlyAccumulatedTimeOff() {
+  var spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var sheet = spreadsheet.getSheetByName(SHEET_NAME);
+  var lastRow = sheet.getLastRow();
+  var timeOffData = sheet.getRange(1, 1, lastRow, 4).getValues();
+
+  var accumulatedTimeOff = calculateAccumulatedTimeOff(timeOffData);
+
+  // Sort the accumulated time-off by total days (descending order)
+  var sortedAccumulatedTimeOff = [];
+  for (var person in accumulatedTimeOff) {
+    for (var typeOfLeave in accumulatedTimeOff[person]) {
+      sortedAccumulatedTimeOff.push({
+        person: person,
+        typeOfLeave: typeOfLeave,
+        days: accumulatedTimeOff[person][typeOfLeave],
+      });
+    }
+  }
+
+  sortedAccumulatedTimeOff.sort(function (a, b) {
+    return b.days - a.days;
+  });
+
+  // Construct the Slack message
+  var slackMessage = "Monthly Accumulated Time-Off:\n";
+  sortedAccumulatedTimeOff.forEach(function (entry) {
+    slackMessage += `${entry.person} - ${
+      entry.typeOfLeave
+    }: ${entry.days.toFixed(1)} days\n`;
+  });
+
+  // Post to Slack
+  var apiUrl = "https://slack.com/api/chat.postMessage";
+  var payload = {
+    channel: CHANNEL,
+    text: slackMessage,
+    token: TOKEN,
+  };
+  var headers = {
+    Authorization: "Bearer " + TOKEN,
+    "Content-Type": "application/json; charset=UTF-8",
+  };
+  var options = {
+    method: "post",
+    headers: headers,
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true,
+  };
+
+  var response = UrlFetchApp.fetch(apiUrl, options);
+  var jsonResponse = JSON.parse(response.getContentText());
+
+  if (!jsonResponse.ok) {
+    Logger.log(
+      "Error posting monthly accumulated time-off to Slack: " +
+        jsonResponse.error
     );
   }
 }
