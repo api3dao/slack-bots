@@ -7,36 +7,29 @@ var SHEET_NAME = "Instructions";
 
 function isDateInThisWeek(date) {
   var now = new Date();
-
-  // Calculate the start and end of the current week
+  // Calculate the start (Monday) of the current week
   var startOfWeek = new Date(
     now.getFullYear(),
     now.getMonth(),
-    now.getDate() - now.getDay()
+    now.getDate() - (now.getDay() === 0 ? 6 : now.getDay() - 1)
   );
-  var endOfWeek = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate() - now.getDay() + 6
-  );
-
+  // Calculate the end (Friday) of the current week
+  var endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 4);
   return date >= startOfWeek && date <= endOfWeek;
 }
 
 function isDateInNextWeek(date) {
   var now = new Date();
-  // Calculate the start and end of the next week
+  // Calculate the start (Monday) of the next week
   var startOfNextWeek = new Date(
     now.getFullYear(),
     now.getMonth(),
-    now.getDate() - now.getDay() + 7
+    now.getDate() + (8 - (now.getDay() === 0 ? 7 : now.getDay()))
   );
-  var endOfNextWeek = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate() - now.getDay() + 13
-  );
-
+  // Calculate the end (Friday) of the next week
+  var endOfNextWeek = new Date(startOfNextWeek);
+  endOfNextWeek.setDate(startOfNextWeek.getDate() + 4);
   return date >= startOfNextWeek && date <= endOfNextWeek;
 }
 
@@ -195,6 +188,7 @@ function postToSlack() {
   var timeOffData = sheet.getRange(1, 1, lastRow, 4).getValues();
 
   var slackMessage = "Time-off updates:\n";
+  var timeOffEntries = [];
 
   var accumulatedTimeOff = calculateAccumulatedTimeOff(timeOffData);
 
@@ -205,30 +199,53 @@ function postToSlack() {
       if (!person) {
         continue;
       }
-      var typeOfTimeOff = timeOffData[i][3];
       var startDate = parseDate(timeOffData[i][1]);
       var endDate = parseDate(timeOffData[i][2]);
 
-      var conciseDateRange = `${formatDate(startDate).substr(
-        4,
-        6
-      )}-${formatDate(endDate).substr(4, 6)} (${formatDate(startDate).substr(
-        0,
-        3
-      )}-${formatDate(endDate).substr(0, 3)})`;
+      var isInThisWeek =
+        isDateInThisWeek(startDate) || isDateInThisWeek(endDate);
+      var isInNextWeek =
+        isDateInNextWeek(startDate) || isDateInNextWeek(endDate);
 
-      if (isDateInThisWeek(startDate) || isDateInThisWeek(endDate)) {
-        slackMessage += `\n${person}, ${conciseDateRange}\n`;
-      } else if (isDateInNextWeek(startDate) || isDateInNextWeek(endDate)) {
-        slackMessage += `\n${person}, ${conciseDateRange} (next week)\n`;
+      if (isInThisWeek || isInNextWeek) {
+        var conciseDateRange = `${formatDate(startDate).substr(
+          4,
+          6
+        )}-${formatDate(endDate).substr(4, 6)} (${formatDate(startDate).substr(
+          0,
+          3
+        )}-${formatDate(endDate).substr(0, 3)})`;
+
+        if (isInNextWeek) {
+          conciseDateRange += " (next week)";
+        }
+
+        timeOffEntries.push({
+          person: person,
+          startDate: startDate,
+          endDate: endDate,
+          conciseDateRange: conciseDateRange,
+        });
       }
     } catch (e) {
       Logger.log("Error in loop at index " + i + ": " + e.toString());
     }
   }
 
-  if (slackMessage === "Time-off updates:\n") {
+  timeOffEntries.sort(function (a, b) {
+    return a.startDate - b.startDate;
+  });
+
+  // Check if there are no updates
+  if (timeOffEntries.length === 0) {
     slackMessage += "No updates for this week or next week.\n";
+  } else {
+    // Construct the message with updates
+    slackMessage += timeOffEntries
+      .map(function (entry) {
+        return `\n${entry.person}, ${entry.conciseDateRange}`;
+      })
+      .join("\n");
   }
 
   var lastBotMessage = getLastBotMessage();
