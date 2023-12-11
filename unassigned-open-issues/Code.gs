@@ -23,10 +23,24 @@ function fetchGitHubIssues(apiUrl, pat) {
     Accept: "application/vnd.github.v3+json",
   };
 
-  const response = UrlFetchApp.fetch(apiUrl, { headers: headers });
-  const jsonResponse = JSON.parse(response.getContentText());
+  let allIssues = [];
+  let page = 1;
+  let hasMorePages = true;
 
-  return jsonResponse.items || [];
+  while (hasMorePages) {
+    const pagedUrl = apiUrl + "&page=" + page;
+    const response = UrlFetchApp.fetch(pagedUrl, { headers: headers });
+    const jsonResponse = JSON.parse(response.getContentText());
+
+    if (jsonResponse.items && jsonResponse.items.length > 0) {
+      allIssues = allIssues.concat(jsonResponse.items);
+    } else {
+      hasMorePages = false;
+    }
+    page++;
+  }
+
+  return allIssues;
 }
 
 function formatSlackMessage(issues) {
