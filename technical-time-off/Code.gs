@@ -201,6 +201,12 @@ function postToSlack() {
       }
       var startDate = parseDate(timeOffData[i][1]);
       var endDate = parseDate(timeOffData[i][2]);
+      var today = new Date();
+
+      // Skip entries where the end date is before today
+      if (endDate < today) {
+        continue;
+      }
 
       var isInThisWeek =
         isDateInThisWeek(startDate) || isDateInThisWeek(endDate);
