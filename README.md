@@ -13,7 +13,12 @@ Below is a list of the Slack bots available in this repository:
    - This bot tracks and reports time-off requests within technical teams. It automates the process of notifying team members about upcoming time-offs and managing time-off records.
 
 2. **Unassigned Open Issues Bot** - Located in [`/unassigned-open-issues`](./unassigned-open-issues)
+
    - This bot is designed to monitor open issues across all repositories in a GitHub organization that have not been assigned to any project. It fetches and posts a daily report to a specified Slack channel, helping teams keep track of unassigned issues and ensuring they are not overlooked.
+
+3. **Technical Weekly Rotations Bot** - Located in [`/technical-weekly-rotations`](./technical-weekly-rotations)
+
+   - This bot automates the weekly selection of multisig signers from a predefined list, adjusting for any signers unavailable due to time-off identified by the technical-time-off bot. It posts the weekly rotation to the `#technical-weekly-rotations` Slack channel, ensuring operational continuity and transparency.
 
 ## Getting Started
 
