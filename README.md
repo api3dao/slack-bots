@@ -18,7 +18,7 @@ Below is a list of the Slack bots available in this repository:
 
 3. **Technical Weekly Rotations Bot** - Located in [`/technical-weekly-rotations`](./technical-weekly-rotations)
 
-   - This bot automates the weekly selection of multisig signers from a predefined list, adjusting for any signers unavailable due to time-off identified by the technical-time-off bot. It posts the weekly rotation to the `#technical-weekly-rotations` Slack channel, ensuring operational continuity and transparency.
+   - This bot automates the selection of weekly signers. It dynamically adjusts the signers list based on their availability, as indicated in the Time off logbook Google Sheet, and accounts for any mid-week changes. The updated list of signers is posted to a Slack channel, ensuring operational continuity and keeping the team informed.
 
 ## Getting Started
 
