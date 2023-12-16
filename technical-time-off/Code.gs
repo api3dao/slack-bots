@@ -95,6 +95,7 @@ function calculateAccumulatedTimeOff(timeOffData) {
     var typeOfLeave = timeOffData[i][3];
     var startDate = parseDate(timeOffData[i][1]);
     var endDate = parseDate(timeOffData[i][2]);
+    endDate.setHours(23, 59, 59, 999); // Set time to the end of the day
 
     // Skip B/L type leaves
     if (typeOfLeave === "B/L") {
@@ -192,6 +193,15 @@ function postToSlack() {
 
   var accumulatedTimeOff = calculateAccumulatedTimeOff(timeOffData);
 
+  // Get the start of the current week
+  var now = new Date();
+  var startOfCurrentWeek = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() - (now.getDay() === 0 ? 6 : now.getDay() - 1)
+  );
+  startOfCurrentWeek.setHours(0, 0, 0, 0); // Set time to midnight
+
   // Construct the slack message based on the time off data
   for (var i = 1; i < timeOffData.length; i++) {
     try {
@@ -201,7 +211,9 @@ function postToSlack() {
       }
       var startDate = parseDate(timeOffData[i][1]);
       var endDate = parseDate(timeOffData[i][2]);
+      endDate.setHours(23, 59, 59, 999); // Set time to the end of the day
       var today = new Date();
+      today.setHours(0, 0, 0, 0); // Set time to midnight
 
       // Skip entries where the end date is before today
       if (endDate < today) {
@@ -213,7 +225,11 @@ function postToSlack() {
       var isInNextWeek =
         isDateInNextWeek(startDate) || isDateInNextWeek(endDate);
 
-      if (isInThisWeek || isInNextWeek) {
+      // Check if the time-off is ongoing during the current week
+      var isOngoing =
+        startDate < startOfCurrentWeek && endDate >= startOfCurrentWeek;
+
+      if (isInThisWeek || isInNextWeek || isOngoing) {
         var conciseDateRange = `${formatDate(startDate).substr(
           4,
           6
