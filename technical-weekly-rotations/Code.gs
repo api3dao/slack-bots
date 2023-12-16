@@ -2,15 +2,81 @@
 var TOKEN = "YOUR_TOKEN";
 var TIME_OFF_CHANNEL_ID = "YOUR_CHANNEL_ID";
 var WEEKLY_ROTATION_CHANNEL = "#technical-weekly-rotations";
-var signersList = ["SIGNER_1", "SIGNER_1", ... , "SIGNER_N"];
+var SPREADSHEET_ID = "YOUR_SPREADSHEET_ID";
+var SIGNERS_SHEET_NAME = "Signers";
+var TIME_OFF_SHEET_NAME = "Instructions";
 
+function fetchSignersFromSheet() {
+  var sheet =
+    SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SIGNERS_SHEET_NAME);
+  var range = sheet.getRange("B2:C"); // Names are in column B and signers status in column C
+  var values = range.getValues();
+  var signers = [];
+
+  for (var i = 0; i < values.length; i++) {
+    var name = values[i][0];
+    var isSignerIndicator = values[i][1];
+
+    if (isSignerIndicator === "yes" || isSignerIndicator === true) {
+      signers.push(name);
+    }
+  }
+  return signers;
+}
+
+function getWeeklySigners(weekNumber, unavailableSigners) {
+  var signersList = fetchSignersFromSheet(); // Fetch signers from the sheet
+  var offset = (weekNumber - 1) % signersList.length;
+  var selectedSigners = [];
+  var count = 0;
+
+  while (selectedSigners.length < 4 && count < signersList.length) {
+    var signer = signersList[(offset + count) % signersList.length];
+    if (!unavailableSigners.includes(signer)) {
+      selectedSigners.push(signer);
+    }
+    count++;
+  }
+  return selectedSigners;
+}
+
+function findReplacementSigners(
+  currentSigners,
+  allSigners,
+  unavailableSigners
+) {
+  var updatedSigners = currentSigners.filter(
+    (signer) => !unavailableSigners.includes(signer)
+  );
+  var count = updatedSigners.length;
+  var offset = 0; // Initialize offset for finding replacements
+
+  while (count < 4) {
+    var potentialSigner = allSigners[offset++];
+    if (
+      !updatedSigners.includes(potentialSigner) &&
+      !unavailableSigners.includes(potentialSigner)
+    ) {
+      updatedSigners.push(potentialSigner);
+      count++;
+    }
+  }
+  return updatedSigners;
+}
 
 function selectWeeklySigners() {
   var currentWeekNumber = getCurrentWeekNumber();
+  var allSigners = fetchSignersFromSheet();
   var unavailableSigners = getUnavailableSigners();
   var weeklySigners = getWeeklySigners(currentWeekNumber, unavailableSigners);
 
-  Logger.log("Selected Weekly Signers: " + JSON.stringify(weeklySigners));
+  weeklySigners = findReplacementSigners(
+    weeklySigners,
+    allSigners,
+    unavailableSigners
+  );
+
+  Logger.log("Final Weekly Signers: " + JSON.stringify(weeklySigners));
 
   if (Array.isArray(weeklySigners) && weeklySigners.length > 0) {
     postSignersToSlack(weeklySigners, WEEKLY_ROTATION_CHANNEL);
@@ -27,33 +93,46 @@ function getCurrentWeekNumber() {
   return Math.ceil(diff / oneWeek);
 }
 
-function getUnavailableSigners() {
-  var timeOffMessage = getLastBotMessage(TIME_OFF_CHANNEL_ID);
-  // Extract names of unavailable signers from the message
-  var unavailableSigners = []; // Extract names from timeOffMessage
-  return unavailableSigners;
+function parseDate(input) {
+  if (input instanceof Date) {
+    return input;
+  } else {
+    return new Date(input); // Input should be a date string
+  }
 }
 
-function getWeeklySigners(weekNumber, unavailableSigners) {
-  var offset = (weekNumber - 1) % signersList.length;
-  var selectedSigners = [];
-  var count = 0;
+function getUnavailableSigners() {
+  var today = new Date();
+  today.setHours(0, 0, 0, 0); // Set time to start of today
 
-  while (selectedSigners.length < 4) {
-    var signer = signersList[(offset + count) % signersList.length];
-    if (!unavailableSigners.includes(signer)) {
-      selectedSigners.push(signer);
+  var sheet =
+    SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(TIME_OFF_SHEET_NAME);
+  var lastRow = sheet.getLastRow();
+  var timeOffData = sheet.getRange(2, 1, lastRow - 1, 3).getValues(); // Data starts from row 2
+
+  var unavailableSigners = [];
+
+  for (var i = 0; i < timeOffData.length; i++) {
+    var person = timeOffData[i][0];
+    var startDate = parseDate(timeOffData[i][1]);
+    var endDate = parseDate(timeOffData[i][2]);
+    endDate.setHours(23, 59, 59, 999); // Set end date to the end of the day
+
+    if (startDate <= today && endDate >= today) {
+      unavailableSigners.push(person);
     }
-    count++;
   }
-  Logger.log(selectedSigners); 
-  return selectedSigners;
+  Logger.log("Unavailable signers:");
+  Logger.log(unavailableSigners);
+  return unavailableSigners;
 }
 
 function postSignersToSlack(signers, channel) {
   // Ensure that 'signers' is a non-empty array
   if (!Array.isArray(signers) || signers.length === 0) {
-    Logger.log("No signers to post or invalid signers list: " + JSON.stringify(signers));
+    Logger.log(
+      "No signers to post or invalid signers list: " + JSON.stringify(signers)
+    );
     return;
   }
 
@@ -102,7 +181,8 @@ function getLastBotMessage(channelId) {
   if (jsonResponse.ok) {
     for (var i = 0; i < jsonResponse.messages.length; i++) {
       var message = jsonResponse.messages[i];
-      if (message.bot_id) { // bot messages object will have bot_id field
+      if (message.bot_id) {
+        // bot messages object will have bot_id field
         return message.text;
       }
     }
@@ -111,7 +191,3 @@ function getLastBotMessage(channelId) {
     return null;
   }
 }
-
-
-// Example usage
-selectWeeklySigners();
