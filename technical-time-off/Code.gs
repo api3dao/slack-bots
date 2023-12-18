@@ -13,9 +13,9 @@ function isDateInThisWeek(date) {
     now.getMonth(),
     now.getDate() - (now.getDay() === 0 ? 6 : now.getDay() - 1)
   );
-  // Calculate the end (Friday) of the current week
+  // Calculate the end (Sunday) of the current week
   var endOfWeek = new Date(startOfWeek);
-  endOfWeek.setDate(startOfWeek.getDate() + 4);
+  endOfWeek.setDate(startOfWeek.getDate() + 6);
   return date >= startOfWeek && date <= endOfWeek;
 }
 
@@ -27,16 +27,29 @@ function isDateInNextWeek(date) {
     now.getMonth(),
     now.getDate() + (8 - (now.getDay() === 0 ? 7 : now.getDay()))
   );
-  // Calculate the end (Friday) of the next week
+  // Calculate the end (Sunday) of the next week
   var endOfNextWeek = new Date(startOfNextWeek);
-  endOfNextWeek.setDate(startOfNextWeek.getDate() + 4);
+  endOfNextWeek.setDate(startOfNextWeek.getDate() + 6);
   return date >= startOfNextWeek && date <= endOfNextWeek;
 }
 
 function parseDate(input) {
   if (input instanceof Date) {
+    // If the input is already a Date object, return it directly
     return input;
+  } else if (typeof input === "string") {
+    // If the input is a string, parse it
+    var parts = input.split("/");
+    if (parts.length === 3) {
+      var day = parseInt(parts[0], 10);
+      var month = parseInt(parts[1], 10) - 1; // JavaScript months are 0-based
+      var year = parseInt(parts[2], 10);
+      return new Date(year, month, day);
+    } else {
+      return new Date("Invalid Date");
+    }
   } else {
+    // If the input is neither a Date object nor a string
     return new Date("Invalid Date");
   }
 }
