@@ -5,7 +5,7 @@ This Google Apps Script bot automates the selection of weekly signers for tasks 
 ## Features
 
 - **Automated Weekly Selection**: Calculates the current week's number and selects signers in a rotating fashion.
-- **Availability Check**: Integrates with a Google Sheet to identify unavailable signers, ensuring that only available members are selected.
+- **Availability Check**: Integrates with the [Time off logbook](https://docs.google.com/spreadsheets/d/1-qxltbYl6316Y6ZMmkephI4Dc5fqp__rpZYjSg4inQk/edit#gid=1070316407) Google Sheet to identify unavailable signers, ensuring that only available members are selected.
 - **Dynamic Replacement**: If a signer becomes unavailable during the week, the bot finds and assigns a replacement from the remaining available signers.
 - **Slack Integration**: Posts the weekly signer list to a specified Slack channel, keeping the team informed.
 
@@ -25,7 +25,7 @@ This Google Apps Script bot automates the selection of weekly signers for tasks 
 
 ### Google Sheet
 
-1. Ensure the Google Sheet contains two sheets: "Signers" for the list of all signers and "Instructions" for time-off data.
+1. The Google Sheet should contain two sheets: ["Signers"](https://docs.google.com/spreadsheets/d/1-qxltbYl6316Y6ZMmkephI4Dc5fqp__rpZYjSg4inQk/edit#gid=591540713) for the list of people specifying signers and ["Instructions"](https://docs.google.com/spreadsheets/d/1-qxltbYl6316Y6ZMmkephI4Dc5fqp__rpZYjSg4inQk/edit#gid=1070316407) for time-off data.
 2. Update the `SPREADSHEET_ID` in the script with your Google Sheet's ID.
 
 ### Time Trigger Setup
