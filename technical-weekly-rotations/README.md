@@ -30,7 +30,7 @@ This Google Apps Script bot automates the selection of weekly signers for tasks 
 
 ### Time Trigger Setup
 
-1. Set up a daily trigger for the `selectWeeklySigners` function to ensure daily updates on signer availability.
+1. Set up a daily trigger for the `updateDailySigners` function to ensure daily updates on signer availability.
 
 ### Running and Testing
 
