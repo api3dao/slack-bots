@@ -1,13 +1,13 @@
-# Weekly Signers Rotator for Slack
+# Weekly Signers Rotator for Slack with Daily Updates
 
-This Google Apps Script bot automates the selection of weekly signers for tasks or roles within a team and posts their names to a designated Slack channel. It ensures operational continuity by rotating through a list of signers and accounting for their availability.
+This Google Apps Script bot automates the selection of weekly signers for tasks or roles within a team and posts their names to a designated Slack channel. It ensures operational continuity by rotating through a list of signers and accounting for their availability. The bot also provides daily updates to ensure the list remains accurate in real-time, accommodating any changes in team members' availability throughout the week.
 
 ## Features
 
-- **Automated Weekly Selection**: Calculates the current week's number and selects signers in a rotating fashion.
+- **Automated Selection with Daily Updates**: Calculates the current week's number and selects signers in a rotating fashion.
 - **Availability Check**: Integrates with the [Time off logbook](https://docs.google.com/spreadsheets/d/1-qxltbYl6316Y6ZMmkephI4Dc5fqp__rpZYjSg4inQk/edit#gid=1070316407) Google Sheet to identify unavailable signers, ensuring that only available members are selected.
 - **Dynamic Replacement**: If a signer becomes unavailable during the week, the bot finds and assigns a replacement from the remaining available signers.
-- **Slack Integration**: Posts the weekly signer list to a specified Slack channel, keeping the team informed.
+- **Slack Integration**: Posts the weekly signer list to a specified Slack channel with daily updates if some signers are off, keeping the team informed.
 
 ## Setup
 
@@ -30,7 +30,7 @@ This Google Apps Script bot automates the selection of weekly signers for tasks 
 
 ### Time Trigger Setup
 
-1. Set up a daily trigger for the `selectWeeklySigners` function to ensure daily updates on signer availability.
+1. Set up a daily trigger for the `updateDailySigners` function to ensure daily updates on signer availability.
 
 ### Running and Testing
 

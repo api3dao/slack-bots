@@ -24,7 +24,7 @@ function fetchSignersFromSheet() {
   return signers;
 }
 
-function getWeeklySigners(weekNumber, unavailableSigners) {
+function getInitialWeeklySigners(weekNumber, unavailableSigners) {
   var signersList = fetchSignersFromSheet(); // Fetch signers from the sheet
   var offset = (weekNumber - 1) % signersList.length;
   var selectedSigners = [];
@@ -64,22 +64,25 @@ function findReplacementSigners(
   return updatedSigners;
 }
 
-function selectWeeklySigners() {
+function updateDailySigners() {
   var currentWeekNumber = getCurrentWeekNumber();
   var allSigners = fetchSignersFromSheet();
   var unavailableSigners = getUnavailableSigners();
-  var weeklySigners = getWeeklySigners(currentWeekNumber, unavailableSigners);
+  var currentSigners = getInitialWeeklySigners(
+    currentWeekNumber,
+    unavailableSigners
+  );
 
-  weeklySigners = findReplacementSigners(
-    weeklySigners,
+  currentSigners = findReplacementSigners(
+    currentSigners,
     allSigners,
     unavailableSigners
   );
 
-  Logger.log("Final Weekly Signers: " + JSON.stringify(weeklySigners));
+  Logger.log("Daily Signers: " + JSON.stringify(currentSigners));
 
-  if (Array.isArray(weeklySigners) && weeklySigners.length > 0) {
-    postSignersToSlack(weeklySigners, WEEKLY_ROTATION_CHANNEL);
+  if (Array.isArray(currentSigners) && currentSigners.length > 0) {
+    postSignersToSlack(currentSigners, WEEKLY_ROTATION_CHANNEL);
   } else {
     Logger.log("No valid signers to post this week.");
   }
