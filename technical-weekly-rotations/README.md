@@ -34,7 +34,7 @@ This Google Apps Script bot automates the selection of weekly signers for tasks 
 
 ### Running and Testing
 
-- Test the script manually and verify that the correct signers are posted to the Slack channel.
+- Test the script manually and verify that the correct signers Slack @handles are posted to the Slack channel.
 - Adjust and troubleshoot as necessary based on your team's workflow.
 
 ## Conclusion

@@ -9,16 +9,17 @@ var TIME_OFF_SHEET_NAME = "Instructions";
 function fetchSignersFromSheet() {
   var sheet =
     SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SIGNERS_SHEET_NAME);
-  var range = sheet.getRange("B2:C"); // Names are in column B and signers status in column C
+  var range = sheet.getRange("B2:D"); // Assuming names in column B, signers status in column C, and Slack IDs in column D
   var values = range.getValues();
   var signers = [];
 
   for (var i = 0; i < values.length; i++) {
     var name = values[i][0];
     var isSignerIndicator = values[i][1];
+    var slackId = values[i][2]; // Slack ID
 
     if (isSignerIndicator === "yes" || isSignerIndicator === true) {
-      signers.push(name);
+      signers.push({ name: name, slackId: slackId });
     }
   }
   return signers;
@@ -139,7 +140,19 @@ function postSignersToSlack(signers, channel) {
     return;
   }
 
-  var message = "Weekly Signers: " + signers.join(", ");
+  var message = "Weekly Signers: ";
+  message += signers
+    .map((signer) => {
+      if (signer.slackId) {
+        // Only add tag if Slack ID is present
+        return `<@${signer.slackId}>`;
+      } else {
+        // If Slack ID is missing, just show the name
+        return signer.name;
+      }
+    })
+    .join(", ");
+
   var apiUrl = "https://slack.com/api/chat.postMessage";
   var payload = {
     channel: channel,
