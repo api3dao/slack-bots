@@ -120,6 +120,14 @@ function calculateAccumulatedTimeOff(timeOffData) {
       continue;
     }
 
+    // Adjust for year-end crossover
+    if (startDate.getFullYear() < currentYear) {
+      startDate = new Date(currentYear, 0, 1); // Set to January 1st of the current year
+    }
+    if (endDate.getFullYear() > currentYear) {
+      endDate = new Date(currentYear, 11, 31, 23, 59, 59, 999); // Set to December 31st of the current year
+    }
+
     if (
       startDate.getFullYear() !== currentYear ||
       endDate.getFullYear() !== currentYear
