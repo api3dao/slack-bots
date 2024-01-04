@@ -140,7 +140,7 @@ function postSignersToSlack(signers, channel) {
     return;
   }
 
-  var message = "Weekly Signers: ";
+  var message = "Daily Signers: ";
   message += signers
     .map((signer) => {
       if (signer.slackId) {
