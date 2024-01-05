@@ -326,7 +326,7 @@ function postToSlack() {
   }
 }
 
-function postMonthlyAccumulatedTimeOff() {
+function postYearlyAccumulatedTimeOff() {
   var spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
   var sheet = spreadsheet.getSheetByName(SHEET_NAME);
   var lastRow = sheet.getLastRow();
@@ -351,7 +351,7 @@ function postMonthlyAccumulatedTimeOff() {
   });
 
   // Construct the Slack message
-  var slackMessage = "Monthly Accumulated Time-Off:\n";
+  var slackMessage = "Yearly Accumulated Time-Off:\n";
   sortedAccumulatedTimeOff.forEach(function (entry) {
     slackMessage += `${entry.person} - ${
       entry.typeOfLeave
@@ -381,7 +381,7 @@ function postMonthlyAccumulatedTimeOff() {
 
   if (!jsonResponse.ok) {
     Logger.log(
-      "Error posting monthly accumulated time-off to Slack: " +
+      "Error posting yearly accumulated time-off to Slack: " +
         jsonResponse.error
     );
   }
