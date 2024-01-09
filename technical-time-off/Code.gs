@@ -190,7 +190,7 @@ function getLastBotMessage() {
   if (jsonResponse.ok) {
     for (var i = 0; i < jsonResponse.messages.length; i++) {
       var message = jsonResponse.messages[i];
-      if (message.bot_id) {
+      if (message.bot_id && message.text.startsWith("Time-off updates:")) {
         // bot messages object will have bot_id field
         return message.text;
       }
