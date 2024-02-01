@@ -86,53 +86,42 @@ function getEndOfNextBusinessWeek() {
 function calculateAccumulatedTimeOff(timeOffData) {
   var accumulatedDaysOffByType = {};
   var currentYear = new Date().getFullYear();
-  // Get the end of the next business week
-  var endOfNextBusinessWeek = getEndOfNextBusinessWeek();
+  var today = new Date(); // Use today's date as the cutoff for calculations
+  today.setHours(23, 59, 59, 999); // Consider the entire day
 
   function countWeekdaysBetweenDates(startDate, endDate) {
     var totalDays = 0;
     var currentDate = new Date(startDate);
-    while (currentDate <= endDate) {
-      // If the day is a working day (0 = Sunday, 6 = Saturday)
+    while (currentDate <= endDate && currentDate <= today) {
+      // Only count up to today
       if (currentDate.getDay() !== 0 && currentDate.getDay() !== 6) {
         totalDays++;
       }
-      currentDate.setDate(currentDate.getDate() + 1); // Move to the next day
+      currentDate.setDate(currentDate.getDate() + 1);
     }
     return totalDays;
   }
 
-  // Iterate through the timeOffData to calculate accumulated time off by type
   for (var i = 1; i < timeOffData.length; i++) {
     var person = timeOffData[i][0];
     var typeOfLeave = timeOffData[i][3];
     var startDate = parseDate(timeOffData[i][1]);
     var endDate = parseDate(timeOffData[i][2]);
-    endDate.setHours(23, 59, 59, 999); // Set time to the end of the day
-
-    // Skip B/L type leaves
-    if (typeOfLeave === "B/L") {
-      continue;
-    }
-
-    // Check if the parsed dates are valid and from the current year
-    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-      continue;
-    }
-
-    // Adjust for year-end crossover
-    if (startDate.getFullYear() < currentYear) {
-      startDate = new Date(currentYear, 0, 1); // Set to January 1st of the current year
-    }
-    if (endDate.getFullYear() > currentYear) {
-      endDate = new Date(currentYear, 11, 31, 23, 59, 59, 999); // Set to December 31st of the current year
-    }
+    endDate.setHours(23, 59, 59, 999);
 
     if (
-      startDate.getFullYear() !== currentYear ||
-      endDate.getFullYear() !== currentYear
+      typeOfLeave === "B/L" ||
+      isNaN(startDate.getTime()) ||
+      isNaN(endDate.getTime())
     ) {
       continue;
+    }
+
+    if (startDate.getFullYear() < currentYear) {
+      startDate = new Date(currentYear, 0, 1);
+    }
+    if (endDate.getFullYear() > currentYear || endDate > today) {
+      endDate = today; // Use today as the end date if the original end date is in the future
     }
 
     if (!accumulatedDaysOffByType[person]) {
@@ -140,9 +129,6 @@ function calculateAccumulatedTimeOff(timeOffData) {
     }
     if (!accumulatedDaysOffByType[person][typeOfLeave]) {
       accumulatedDaysOffByType[person][typeOfLeave] = 0;
-    }
-    if (endDate > endOfNextBusinessWeek) {
-      endDate = endOfNextBusinessWeek;
     }
 
     accumulatedDaysOffByType[person][typeOfLeave] += countWeekdaysBetweenDates(
