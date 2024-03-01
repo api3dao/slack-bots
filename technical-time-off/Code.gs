@@ -228,9 +228,10 @@ function postToSlack() {
       }
 
       var isInThisWeek =
-        isDateInThisWeek(startDate) || isDateInThisWeek(endDate);
+        isDateInThisWeek(startDate) ||
+        (isDateInThisWeek(endDate) && startDate < startOfCurrentWeek);
       var isInNextWeek =
-        isDateInNextWeek(startDate) || isDateInNextWeek(endDate);
+        isDateInNextWeek(startDate) && !isDateInThisWeek(startDate);
 
       // Check if the time-off is ongoing during the current week
       var isOngoing =

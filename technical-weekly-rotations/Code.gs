@@ -25,65 +25,66 @@ function fetchSignersFromSheet() {
   return signers;
 }
 
-function getInitialWeeklySigners(weekNumber, unavailableSigners) {
-  var signersList = fetchSignersFromSheet(); // Fetch signers from the sheet
-  var offset = (weekNumber - 1) % signersList.length;
+// This function selects signers based on the week number, excluding any unavailable ones.
+function getInitialWeeklySigners(weekNumber, allSigners, unavailableSigners) {
+  var offset = ((weekNumber - 1) * 4) % allSigners.length; // Adjust the multiplier for different distributions.
   var selectedSigners = [];
-  var count = 0;
 
-  while (selectedSigners.length < 4 && count < signersList.length) {
-    var signer = signersList[(offset + count) % signersList.length];
-    if (!unavailableSigners.includes(signer)) {
+  for (var i = 0; i < allSigners.length && selectedSigners.length < 4; i++) {
+    var index = (offset + i) % allSigners.length;
+    var signer = allSigners[index];
+    if (
+      !unavailableSigners.includes(signer.name) &&
+      !selectedSigners.some((s) => s.name === signer.name)
+    ) {
       selectedSigners.push(signer);
     }
-    count++;
   }
   return selectedSigners;
 }
 
+// This function finds replacements for any unavailable signers in the initial list.
 function findReplacementSigners(
-  currentSigners,
+  selectedSigners,
   allSigners,
   unavailableSigners
 ) {
-  var updatedSigners = currentSigners.filter(
-    (signer) => !unavailableSigners.includes(signer)
-  );
-  var count = updatedSigners.length;
-  var offset = 0; // Initialize offset for finding replacements
+  if (selectedSigners.length < 4) {
+    let availableSigners = allSigners.filter(
+      (signer) =>
+        !unavailableSigners.includes(signer.name) &&
+        !selectedSigners.find((s) => s.name === signer.name)
+    );
 
-  while (count < 4) {
-    var potentialSigner = allSigners[offset++];
-    if (
-      !updatedSigners.includes(potentialSigner) &&
-      !unavailableSigners.includes(potentialSigner)
-    ) {
-      updatedSigners.push(potentialSigner);
-      count++;
+    while (selectedSigners.length < 4 && availableSigners.length > 0) {
+      selectedSigners.push(availableSigners.shift()); // Add available signers not already selected.
     }
   }
-  return updatedSigners;
+  return selectedSigners;
 }
 
 function updateDailySigners() {
   var currentWeekNumber = getCurrentWeekNumber();
-  var allSigners = fetchSignersFromSheet();
-  var unavailableSigners = getUnavailableSigners();
-  var currentSigners = getInitialWeeklySigners(
-    currentWeekNumber,
-    unavailableSigners
-  );
+  var allSigners = fetchSignersFromSheet(); // Fetch all potential signers.
+  var unavailableSigners = getUnavailableSigners(); // Should return a list of signer names.
 
-  currentSigners = findReplacementSigners(
-    currentSigners,
+  // Initial selection with respect to week number and excluding unavailable signers.
+  var weeklySelectedSigners = getInitialWeeklySigners(
+    currentWeekNumber,
     allSigners,
     unavailableSigners
   );
 
-  Logger.log("Daily Signers: " + JSON.stringify(currentSigners));
+  // Ensure no duplicates and all signers are available.
+  var finalSigners = findReplacementSigners(
+    weeklySelectedSigners,
+    allSigners,
+    unavailableSigners
+  );
 
-  if (Array.isArray(currentSigners) && currentSigners.length > 0) {
-    postSignersToSlack(currentSigners, WEEKLY_ROTATION_CHANNEL);
+  Logger.log("Weekly Signers: " + JSON.stringify(finalSigners));
+  if (finalSigners.length > 0) {
+    postSignersToSlack(finalSigners, WEEKLY_ROTATION_CHANNEL);
   } else {
     Logger.log("No valid signers to post this week.");
   }
