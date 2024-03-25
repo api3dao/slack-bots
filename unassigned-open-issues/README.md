@@ -7,6 +7,7 @@ This bot is designed to fetch unassigned open issues from all repositories withi
 - The bot searches for open issues in the specified GitHub organization that have not been assigned to any project.
 - It categorizes these issues by repository and compiles a report.
 - The report is then posted daily to a designated Slack channel, providing a consolidated view of unassigned issues.
+- The bot tags the dependencies and code owners in the Slack messages for each repository. This ensures that relevant team members are alerted directly in Slack, enhancing the visibility of unassigned open issues.
 
 ## How to Set Up
 

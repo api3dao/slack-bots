@@ -3,6 +3,33 @@ const githubApiUrl = `https://api.github.com/search/issues?q=org:${orgName}+is:i
 const githubPAT = "github_pat_token"; // Replace with your GitHub PAT that has 'repo' scope for accessing public and private repositories
 const slackChannel = "YOUR_CHANNEL_ID"; // channel ID is accessible from the channel details window
 const slackBotToken = "YOUR_TOKEN"; // Replace with your Slack bot token
+const SPREADSHEET_ID = "YOUR_SPREADSHEET_ID";
+const SHEET_NAME = "YOUR_SHEET_NAME";
+
+function fetchOwnerData() {
+  var sheet =
+    SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
+  var range = sheet.getDataRange();
+  var values = range.getValues();
+  var ownerMap = new Map();
+
+  for (var i = 1; i < values.length; i++) {
+    var row = values[i];
+    var repository = row[0];
+    // Assume 'yes' means active. If column F is empty or anything other than 'yes', consider it inactive.
+    var isActive = row[5] && row[5].toLowerCase() === "yes";
+    var slackIds = isActive
+      ? row
+          .slice(3, 5)
+          .filter((id) => id !== "")
+          .map((id) => `<@${id}>`)
+          .join(" ")
+      : "";
+    // Store both slackIds and isActive flag
+    ownerMap.set(repository, { slackIds, isActive });
+  }
+  return ownerMap;
+}
 
 function fetchAndReportGitHubIssues() {
   // Fetch GitHub issues
@@ -45,6 +72,7 @@ function fetchGitHubIssues(apiUrl, pat) {
 
 function formatSlackMessage(issues) {
   let repoIssuesMap = new Map();
+  const ownerMap = fetchOwnerData(); // Fetch the owner data
 
   // Group issues by repository
   issues.forEach((issue) => {
@@ -58,7 +86,13 @@ function formatSlackMessage(issues) {
   // Format message for each repository
   let message = "Unassigned GitHub Issues Report:\n\n";
   repoIssuesMap.forEach((issues, repoName) => {
-    message += `There are ${issues.length} open issues in the ${repoName} repository:\n`;
+    const ownerData = ownerMap.get(repoName) || {
+      slackIds: "",
+      isActive: false,
+    };
+    // Check if the board is active, and prepend owner tags if it is
+    const ownersTag = ownerData.isActive ? ownerData.slackIds : "";
+    message += `${ownersTag} There are ${issues.length} open issues in the ${repoName} repository:\n`;
     issues.forEach((issue) => {
       message += `- <${issue.html_url}|${issue.title}>\n`;
     });
