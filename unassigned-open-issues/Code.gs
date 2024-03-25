@@ -3,7 +3,13 @@ const githubApiUrl = `https://api.github.com/search/issues?q=org:${orgName}+is:i
 const githubPAT = "github_pat_token"; // Replace with your GitHub PAT that has 'repo' scope for accessing public and private repositories
 const slackChannel = "YOUR_CHANNEL_ID"; // channel ID is accessible from the channel details window
 const slackBotToken = "YOUR_TOKEN"; // Replace with your Slack bot token
+
+// Replace "YOUR_SPREADSHEET_ID" with the actual ID of your Google Spreadsheet.
+// This spreadsheet should contain the mapping of GitHub repository names to Slack user IDs for code owners and dependency owners.
+// Ensure that column F contains the word "yes" (case insensitive) for active boards.
 const SPREADSHEET_ID = "YOUR_SPREADSHEET_ID";
+// Replace "YOUR_SHEET_NAME" with the name of the specific sheet within the spreadsheet
+// that holds the repository to Slack user ID mappings and the active status in column F.
 const SHEET_NAME = "YOUR_SHEET_NAME";
 
 function fetchOwnerData() {
